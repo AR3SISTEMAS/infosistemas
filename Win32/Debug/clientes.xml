@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <cliente>
-<nome>RAMON MEDEIROS</nome>
-<identidade>MG -166555</identidade>
+<nome>RAMON MEDEIROS GUIMARAES</nome>
+<identidade>MG 55587</identidade>
 <CPF>033.879.376-36</CPF>
 <telefone>(031)3495-1565</telefone>
 <email>ramonmedeiros@hotmail.com</email>
-<CEP>31555-290</CEP>
+<CEP>31720-500</CEP>
 <endereco>
-<logradouro>RUA REYNALDO SMITH CAMARGOS</logradouro>
+<logradouro>AVENIDA GENERAL CARLOS GUEDES</logradouro>
 <numero>140</numero>
-<complemento></complemento>
-<bairro>SANTA AMÉLIA</bairro>
+<complemento>203</complemento>
+<bairro>PLANALTO</bairro>
 <cidade>BELO HORIZONTE</cidade>
 <estado>MG</estado>
 <pais>BRASIL</pais>
