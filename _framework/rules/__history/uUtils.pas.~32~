@@ -1,0 +1,159 @@
+unit uUtils;
+
+interface
+
+
+uses System.SysUtils, System.Classes, Forms, Vcl.StdCtrls, Dialogs, Windows, System.RegularExpressions, Winapi.WinInet;
+
+type
+  ///<summary>TVALID - CLASSE PARA VALIDAÇÃO</summary>
+  TValid = class
+    private
+    public
+      function MinLength (const AField : string; const ASize : Integer) : Boolean;
+      function CPF (const ACPF : string) : Boolean;
+      function CEP (const ACEP : string) : Boolean;
+      function Email(const AEmail : string) : Boolean;
+      function Telefone(const ATelefone : string) : Boolean;
+      function ValidField (const APreposition : Boolean; const AMsg : string) : Boolean;
+  end;
+
+  /// <summary>TMSG - CLASSE MENSAGENS NO PADRÃO WINDOWS VCL</summary>
+  TMSG = class
+    private
+    public
+      procedure MsgBox (const ACaption : string);
+      procedure MsgBoxAlert (const ACaption : string);
+      function  MsgBoxConfirmDefNo (const ACaption : string) : Boolean;
+  end;
+
+  /// <summary>TSO - CLASSE INTEGRAÇÃO COM SISTEMA OPERACIONAL</summary>
+  TSO = class
+    private
+    public
+      function InternetConnected : Boolean;
+  end;
+
+implementation
+
+{ TMSG }
+
+procedure TMSG.MsgBox(const ACaption: string);
+begin
+  Application.MessageBox(PChar(ACaption), PChar(Application.Title), mb_Ok + MB_ICONASTERISK + mb_DefButton1 + mb_applmodal);
+end;
+
+procedure TMSG.MsgBoxAlert(const ACaption: string);
+begin
+  Application.MessageBox(PChar(ACaption), PChar(Application.Title), mb_Ok + MB_ICONEXCLAMATION + mb_DefButton1 + mb_applmodal);
+end;
+
+function TMSG.MsgBoxConfirmDefNo(const ACaption: string): Boolean;
+begin
+  Result := Application.MessageBox(PChar(ACaption), PChar(Application.Title), MB_YESNO + MB_ICONQUESTION + mb_DefButton2 + mb_applmodal) = idYes;
+end;
+
+{ TValid }
+
+function TValid.CEP(const ACEP : string): Boolean;
+begin
+  Result := TRegEx.IsMatch(ACEP, '^\d{5}-\d{3}$');
+end;
+
+function TValid.CPF(const ACPF: string): Boolean;
+var         I    : Integer;
+    LMesmoDigito : Char;
+    LValida      : Boolean;
+    LDigito1,
+    LDigito2     : Integer;
+            LCPF : string;
+begin
+    Result := False;
+    if Length(ACPF) = 0 then
+      Exit;
+
+    LCPF := ACPF;
+    LDigito1 := 0;
+    LDigito2 := 0;
+    LMesmoDigito:= LCPF[1];
+
+    Delete(LCPF, AnsiPos('.',LCPF),1);
+    Delete(LCPF, AnsiPos('.',LCPF),1);
+    Delete(LCPF, AnsiPos('-',LCPF),1);
+
+    if Length(LCPF) <> 11 then
+      Exit;
+
+    for i:=1 to length(LCPF) do
+    begin
+      if LCPF[i] <> LMesmoDigito then
+      begin
+        LValida := True;
+        break
+      end;
+    end;
+    if not LValida then
+      Exit;
+
+    for i:=1 to 9 do
+       LDigito1 := LDigito1 + (StrToInt(LCPF[10- I])*(I+1));
+    LDigito1:= ((11 - (LDigito1 mod 11)) mod 11) mod 10;
+    if IntToStr(LDigito1) <> LCPF[10] then
+      Exit;
+
+    for I := 1 to 10 do
+      LDigito2 := LDigito2 +(StrToInt(LCPF[11-i])*(I+1));
+    LDigito2 := ((11 - (LDigito2 mod 11))mod 11) mod 10;
+    if IntToStr(LDigito2) <> LCPF[11] then
+      Exit;
+
+  Result := True;
+end;
+
+function TValid.Email(const AEmail: string): Boolean;
+begin
+  Result := TRegEx.IsMatch(AEmail, '^[-a-zA-Z0-9][-.a-zA-Z0-9]*@[-.a-zA-Z0-9]+(\.[-.a-zA-Z0-9]+)*\.(com|edu|info|gov|int|mil|net|org|biz|name|museum|coop|aero|pro|tv|[a-zA-Z]{2})$');
+end;
+
+function TValid.MinLength(const AField: string; const ASize : Integer): Boolean;
+begin
+  Result := Length(AField) >= ASize;
+end;
+
+function TValid.Telefone(const ATelefone: string): Boolean;
+begin
+  Result := TRegEx.IsMatch(ATelefone, '(\(?\d{3}\)?\s)?(\d{4,5}\-\d{4})');
+end;
+
+function TValid.ValidField(const APreposition: Boolean; const AMsg: string): Boolean;
+Var LMSG : TMSG;
+begin
+  LMSG := TMSG.Create;
+  try
+    Result := APreposition;
+    if Result = False then
+      LMSG.MsgBoxAlert(AMsg);
+  finally
+    FreeAndNil(LMSG);
+  end;
+end;
+
+{ TSO }
+
+function TSO.InternetConnected: Boolean;
+var LState : Dword;
+    LConn  : string;
+begin
+  Result := False;
+  Result := 'NONE';
+  InternetGetConnectedState(@LState, 0);
+  Sleep(500);
+  if LState and INTERNET_CONNECTION_LAN   <> 0 then
+    Result := 'LAN';
+  if LState and INTERNET_CONNECTION_MODEM <> 0 then
+    Result := 'MODEM';
+  if LState and INTERNET_CONNECTION_PROXY <> 0 then
+    Result := 'PROXY';
+end;
+
+end.

@@ -1,0 +1,136 @@
+unit uEmail;
+
+interface
+
+uses
+  IdSMTP, IdSSLOpenSSL, IdMessage, IdText, IdAttachmentFile, Ar3.CompAdo, System.SysUtils, IdIOHandlerSocket, IdIOHandler,
+  IdExplicitTLSClientServerBase, Classes, uUtils;
+
+type
+    TEmail = class
+    private
+      FDestinatarios : TStringList;
+      FAssunto       : String;
+      FBody          : String;
+      FAnexos        : TStringList;
+
+      IdSSLIOHandlerSocket : TIdSSLIOHandlerSocketOpenSSL;
+      IdSMTP    : TIdSMTP;
+      IdMessage : TIdMessage;
+      IdText    : TIdText;
+    public
+      property Destinatarios : TStringList read FDestinatarios  write FDestinatarios;
+      property Assunto       : String      read FAssunto        write FAssunto;
+      property Body          : String      read FBody           write FBody;
+      property Anexos        : TStringList read FAnexos         write FAnexos;
+
+      constructor Create();
+      destructor Destroy;
+      function Send : Boolean;
+  end;
+
+implementation
+
+
+{ TEmail }
+
+constructor TEmail.Create;
+begin
+  FDestinatarios := TStringList.Create;
+  FAssunto       := '';
+  FBody          := '';
+  FAnexos        := TStringList.Create;
+  IdSSLIOHandlerSocket := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+  IdSMTP               := TIdSMTP.Create(nil);
+  IdMessage            := TIdMessage.Create(nil);
+end;
+
+destructor TEmail.Destroy;
+begin
+  FreeAndNil(FDestinatarios);
+  FreeAndNil(FAnexos);
+end;
+
+function TEmail.Send: Boolean;
+Var I : Integer;
+ LMSG : TMSG;
+begin
+  Result := False;
+  try
+    LMSG             := TMSG.Create;
+    IdSMTP.IOHandler := IdSSLIOHandlerSocket;
+    IdSMTP.UseTLS    := utUseExplicitTLS;
+    IdSMTP.AuthType  := satDefault;
+
+    {***********************  NOTA  ***********************
+      Por ser somente um exemplo para testes de processo seletivo para Infosistemas
+      Passei os parâmetros de configuração de forma "explicita" como abaixo.
+      Bem como criei um e-mail para testes. Ressalto que o domínio "AR3 Sistemas", pertence ao candidato
+
+      * Normalmente em um projeto para usuário final eu mantenho a configuração entre os cadastros gerais e/ou do usuário
+      em um banco de dados de forma criptografada.
+
+      * O ideal também é aplicar SSL ao envio do E-mail, todavia normalmente é comum o envio de DLL adicionais que considero,
+      desnecessárias para este teste.
+    }
+
+    IdSMTP.Port      := 587;
+    IdSMTP.Host      := 'mail.ar3sistemas.com.br';
+    IdSMTP.Username  := 'info_sistemas_teste@ar3sistemas.com.br';
+    IdSMTP.Password  := 'r%0g5eT7';
+    IdMessage.From.Address := 'info_sistemas_teste@ar3sistemas.com.br';
+    IdMessage.From.Name := 'TESTE - INFOSISTEMAS - CADCLI';
+    IdMessage.ReplyTo.EMailAddresses := IdMessage.From.Address;
+
+    for I := 0 to FDestinatarios.Count - 1 do
+      IdMessage.Recipients.Add.Text := FDestinatarios[I];
+
+    IdMessage.Subject  := FAssunto;
+    IdMessage.Encoding := meMIME;
+    IdMessage.Date     := Now;
+    IdMessage.ReceiptRecipient.Text := '';
+
+    IdText := TIdText.Create(IdMessage.MessageParts);
+    IdText.Body.Add('<html>');
+    IdText.Body.Add('<body>');
+    IdText.Body.Add(FBody);
+    IdText.Body.Add('<br><br>Enviado pelo Sistema de Cadastro de Clientes - InfoSistemas - www.infosistemas.com.br');
+    IdText.Body.Add('</body>');
+    IdText.Body.Add('</html>');
+    IdText.ContentType := 'text/html; charset=iso-8859-1';
+
+    for I := 0 to FAnexos.Count - 1 do
+      if FileExists(FAnexos[I]) then
+        TIdAttachmentFile.Create(IdMessage.MessageParts, FAnexos[I]);
+
+    try
+      IdSMTP.Connect();
+      IdSMTP.Authenticate;
+    except
+      on E:Exception do
+      begin
+          LMSG.MsgBoxAlert('Erro ao conectar o provedor ' + E.Message);
+        Exit;
+      end;
+    end;
+
+    try
+      IdSMTP.Send(IdMessage);
+    except
+      on E:Exception do
+      begin
+        LMSG.MsgBoxAlert('Erro ao enviar o E-mail ' + E.Message);
+      end;
+    end;
+  finally
+    IdSMTP.Disconnect;
+    UnLoadOpenSSLLibrary;
+    FreeAndNil(IdMessage);
+    FreeAndNil(IdSSLIOHandlerSocket);
+    FreeAndNil(IdSMTP);
+    FreeAndNil(LMSG);
+  end;
+  Result := True;
+end;
+
+end.

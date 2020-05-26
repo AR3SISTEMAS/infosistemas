@@ -1,0 +1,5 @@
+object dmUI: TdmUI
+  OldCreateOrder = False
+  Height = 390
+  Width = 637
+end

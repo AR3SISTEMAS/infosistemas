@@ -1,0 +1,295 @@
+unit udmUI;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Forms, Vcl.StdCtrls, Dialogs, TypInfo, Vcl.Graphics, Windows,
+  System.ImageList, Vcl.ImgList, Vcl.Controls;
+
+type
+  //---- CLASSE PARA VALIDAÇÃO DE ENTRADA DE DADOS ---//
+  TKeyBoard = class
+  private
+    procedure KeyPressOnlyNumbers (Sender: TObject; var Key: Char);
+    procedure OnKeyPressMask(Sender: TObject; var Key: Char);
+    procedure OnKeyUpMask(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure OnKeyPressPhone(Sender: TObject; var Key: Char);
+  public
+    procedure SetMask(AComponent: TComponent; AMask : String);
+    procedure SetMaskPhone(AComponent: TComponent);
+  end;
+
+  //---- CLASSE PARA VALIDAÇÃO DO CONTEÚDO DOS DADOS DIGITADOS ---//
+  TValid = class
+    private
+    public
+      function CPF (const ACPF : String) : Boolean;
+      function CEP (const ACEP : String) : Boolean;
+      function Email(const AEmail : String) : Boolean;
+      function Telefone(const ATelefone : String) : Boolean;
+  end;
+ //--- CLASSE PARA MENSAGENS ---//
+  TMSG = class
+    private
+    public
+      procedure MsgBox (const ACaption : String);
+      function  MsgBoxConfirmDefNo (const ACaption : String) : Boolean;
+  end;
+
+
+  TdmUI = class(TDataModule)
+    procedure DataModuleCreate(Sender: TObject);
+    procedure DataModuleDestroy(Sender: TObject);
+  private
+    FKeyboard : TKeyboard;
+    FValid    : TValid;
+    FMSG      : TMSG;
+  public
+    property Keyboard : TKeyboard read FKeyboard write FKeyboard;
+    property Valid    : TValid    read FValid    write FValid;
+    property MSG      : TMSG      read FMSG      write FMSG;
+    procedure SetForm(const AForm : TForm);
+  end;
+
+var
+  dmUI: TdmUI;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+{ TdmUI }
+
+procedure TdmUI.DataModuleCreate(Sender: TObject);
+begin
+  FKeyboard := TKeyBoard;
+  FValid    := TValid;
+  FMSG      := TMSG.Create;
+end;
+
+procedure TdmUI.DataModuleDestroy(Sender: TObject);
+begin
+  if FKeyboard <> nil then
+    FreeAndNil(FKeyboard);
+  if FValid <> nil then
+    FreeAndNil(FValid);
+  if FMSG <> nil then
+    FreeAndNil(FMSG);
+end;
+
+procedure TdmUI.SetForm(const AForm: TForm);
+Var I   : Integer;
+   Prop : PPropInfo;
+begin
+  for I := 0 to AForm.ComponentCount - 1 do
+  begin
+    if AForm.Components[I] is TCustomEdit then
+    begin
+      TCustomEdit(AForm.Components[I]).Clear;
+      Prop := GetPropInfo(AForm.Components[I], 'CharCase');
+      if (Assigned(Prop)) then
+        SetPropValue(AForm.Components[I], 'CharCase', ecUpperCase);
+    end;
+  end;
+end;
+
+{ TKeyBoard }
+procedure TKeyBoard.KeyPressOnlyNumbers(Sender: TObject; var Key: Char);
+begin
+  if not (Key in ['A'..'Z', 'a'..'z', #13, #8, #9])then
+    Key := #0;
+end;
+
+procedure TKeyBoard.OnKeyPressMask(Sender: TObject; var Key: Char);
+Var lMask : String;
+begin
+  if Sender is TEdit then
+  begin
+    lMask := TEdit(Sender).HelpKeyword;
+    TEdit(Sender).MaxLength := Length(lMask);
+    if Length(lMask) > 0 then
+    begin
+      if (Copy(lMask, TEdit(Sender).SelStart + 1, 1) = '#') and not (Key in ['0'..'9', #8, #9, #13]) then
+        Key := #0;
+      if (Copy(lMask, TEdit(Sender).SelStart + 1, 1) = '@') and not (Key in ['A'..'Z', 'a'..'z', #8, #9, #13]) then
+        Key := #0;
+      if (Copy(lMask, TEdit(Sender).SelStart + 1, 1) <> Char(Key)) and (Copy(lMask, TEdit(Sender).SelStart + 1, 1) <> '#') and (Copy(lMask, TEdit(Sender).SelStart + 1, 1) <> '@') and not (Key in [#8, #9, #13]) then
+        Key := #0;
+    end;
+  end;
+end;
+
+procedure TKeyBoard.OnKeyPressPhone(Sender: TObject; var Key: Char);
+  const AActionKey = [#13, #8, #9];
+
+  function FindChar(const AChar : Char) : Boolean;
+  begin
+    Result := (Pos(AChar, TEdit(Sender).Text) > 0) and (Key = AChar);
+    if Result then
+      Key := #0;
+  end;
+begin
+  if (FindChar('(')) or FindChar(')') or FindChar('-') then Exit;
+  if not ((Key in ['0'..'9']) or (key in AActionKey)) then
+    Key := #0;
+
+  TEdit(Sender).MaxLength := 14;
+  if Copy(TEdit(Sender).Text, 6, 1) = '9' then
+    TEdit(Sender).MaxLength := 15;
+
+  if not (Key in AActionKey) and (Length(TEdit(Sender).Text) = 4) then
+  begin
+     TEdit(Sender).Text := TEdit(Sender).Text + ')' + Key;
+     Key := #0;
+     TEdit(Sender).SelStart := Length(TEdit(Sender).Text) + 1;
+     Exit;
+  end;
+  if not (Key in AActionKey) and (Length(TEdit(Sender).Text) = 9) and (Copy(TEdit(Sender).Text, 6, 1) <> '9') then
+  begin
+     TEdit(Sender).Text := TEdit(Sender).Text + '-' + Key;
+     Key := #0;
+     TEdit(Sender).SelStart := Length(TEdit(Sender).Text) + 1;
+     Exit;
+  end;
+  if not (Key in AActionKey) and (Length(TEdit(Sender).Text) = 10) and (Copy(TEdit(Sender).Text, 6, 1) = '9') then //Hífen para celular
+  begin
+     TEdit(Sender).Text := TEdit(Sender).Text + '-' + Key;
+     Key := #0;
+     TEdit(Sender).SelStart := Length(TEdit(Sender).Text) + 1;
+     Exit;
+  end;
+  if (Copy(TEdit(Sender).Text, 0, 1) <> '(') and (Length(TEdit(Sender).Text) = 0) and not (Key in AActionKey) then
+  begin
+     if Key = '0' then
+       TEdit(Sender).Text := '(0'
+     else
+       TEdit(Sender).Text := '(0' + Key;
+     Key := #0;
+     TEdit(Sender).SelStart := Length(TEdit(Sender).Text) + 1;
+  end;
+
+
+end;
+
+procedure TKeyBoard.OnKeyUpMask(Sender: TObject; var Key: Word; Shift: TShiftState);
+Var lMask : String;
+begin
+  if Sender is TEdit then
+  begin
+    lMask := TEdit(Sender).HelpKeyword;
+    if (not (Key in [VK_BACK, VK_LEFT, VK_RIGHT, VK_HOME, VK_END])) and (Length(lMask) > 0 ) then
+    begin
+      if (Copy(lMask, Length(TEdit(Sender).Text)+ 1, 1) <> '#') and (Copy(lMask, TEdit(Sender).SelStart + 1, 1) <> '#') and (Copy(lMask, TEdit(Sender).SelStart + 1, 1) <> '@') then
+      begin
+        TEdit(Sender).Text     := TEdit(Sender).Text + Copy(lMask, Length(TEdit(Sender).Text) + 1, 1);
+        TEdit(Sender).SelStart := Length(TEdit(Sender).Text);
+      end;
+    end;
+  end;
+end;
+
+procedure TKeyBoard.SetMask(AComponent: TComponent; AMask: String);
+begin
+  if AComponent is TEdit then
+  begin
+    TEdit(AComponent).HelpKeyword := AMask;
+    TEdit(AComponent).OnKeyPress  := OnKeyPressMask;
+    TEdit(AComponent).OnKeyUp     := OnKeyUpMask;
+  end;
+end;
+
+procedure TKeyBoard.SetMaskPhone(AComponent: TComponent);
+begin
+  if AComponent is TEdit then
+  begin
+    TEdit(AComponent).OnKeyPress := OnKeyPressPhone;
+  end;
+end;
+
+{ TValid }
+
+function TValid.CEP(const ACEP: String): Boolean;
+begin
+
+end;
+
+function TValid.CPF(const ACPF: String): Boolean;
+var I       : Integer;
+    Want    : Char;
+    Wvalid  : Boolean;
+    Wdigit1,
+    Wdigit2 : Integer;
+        cpf : String;
+begin
+    Result := False;
+    cpf := ACPF;
+    Wdigit1 := 0;
+    Wdigit2 := 0;
+    Want:= cpf[1];
+
+    Delete(cpf, AnsiPos('.',cpf),1); //Mantém somente os números
+    Delete(cpf, AnsiPos('.',cpf),1);
+    Delete(cpf, AnsiPos('-',cpf),1);
+
+    //CPF's Repatidos
+    for i:=1 to length(cpf) do
+    begin
+      if cpf[i] <> Want then
+      begin
+        Wvalid := True;
+        break
+      end;
+    end;
+    // se o cpf é composto por numeros repetido retorna falso
+    if not Wvalid then
+      Exit;
+
+    //executa o calculo para o primeiro verificador
+    for i:=1 to 9 do
+    begin
+       wdigit1:=Wdigit1+(strtoint(cpf[10-i])*(I+1));
+    end;
+    Wdigit1:= ((11 - (Wdigit1 mod 11))mod 11) mod 10;
+
+    //verifica se o 1° digito confere
+    if IntToStr(Wdigit1) <> cpf[10] then
+      Exit;
+
+    for I := 1 to 10 do
+    begin
+      wdigit2 := Wdigit2 +(strtoint(cpf[11-i])*(I+1));
+    end;
+    Wdigit2:= ((11 - (Wdigit2 mod 11))mod 11) mod 10;
+
+    // confere o 2° digito verificador
+    if IntToStr(Wdigit2) <> cpf[11] then
+      Exit;
+
+  Result := True;
+end;
+
+function TValid.Email(const AEmail: String): Boolean;
+begin
+
+end;
+
+function TValid.Telefone(const ATelefone: String): Boolean;
+begin
+
+end;
+
+{ TMSG }
+
+procedure TMSG.MsgBox(const ACaption: String);
+begin
+  Application.MessageBox(PChar(ACaption), PChar(Application.Title), mb_Ok + MB_ICONASTERISK + mb_DefButton1 + mb_applmodal);
+end;
+
+function TMSG.MsgBoxConfirmDefNo(const ACaption: String): Boolean;
+begin
+  Result := Application.MessageBox(PChar(ACaption), PChar(Application.Title), MB_YESNO + MB_ICONQUESTION + mb_DefButton2 + mb_applmodal) = idYes;
+end;
+
+end.

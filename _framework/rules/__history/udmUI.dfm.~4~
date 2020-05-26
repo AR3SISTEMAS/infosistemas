@@ -1,0 +1,13 @@
+object dmUI: TdmUI
+  OldCreateOrder = False
+  Height = 390
+  Width = 637
+  object imgListGeral: TImageList
+    ColorDepth = cd32Bit
+    DrawingStyle = dsTransparent
+    Height = 32
+    Width = 32
+    Left = 48
+    Top = 56
+  end
+end

@@ -1,0 +1,304 @@
+unit uClientes;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, uUtils, TypInfo, Dialogs, Forms;
+
+type
+  TCliente = class
+  private
+    FNome        : String;
+    FIdentidade  : String;
+    FCPF         : String;
+    FTelefone    : String;
+    FEmail       : String;
+    FCEP         : String;
+    FLogradouro  : String;
+    FNumero      : String;
+    FComplemento : String;
+    FBairro      : String;
+    FCidade      : String;
+    FEstado      : String;
+    FPais        : String;
+
+    procedure setNome(const AValue : String);
+    procedure setIdentidade(const AValue : String);
+    procedure setCPF(const AValue : String);
+    procedure setTelefone(const AValue : String);
+    procedure setEmail(const AValue : String);
+    procedure setCEP(const AValue : String);
+    procedure setLogradouro(const AValue : String);
+    procedure setNumero(const AValue : String);
+    procedure setComplemento(const AValue : String);
+    procedure setBairro(const AValue : String);
+    procedure setCidade(const AValue : String);
+    procedure setEstado(const AValue : String);
+    procedure setPais(const AValue : String);
+  published
+    property Nome        : String read FNome         write setNome;
+    property Identidade  : String read FIdentidade   write setIdentidade;
+    property CPF         : String read FCPF          write setCPF;
+    property Telefone    : String read FTelefone     write setTelefone;
+    property Email       : String read FEmail        write setEmail;
+    property CEP         : String read FCEP          write setCEP;
+    property Logradouro  : String read FLogradouro   write setLogradouro;
+    property Numero      : String read FNumero       write setNumero;
+    property Complemento : String read FComplemento  write setComplemento;
+    property Bairro      : String read FBairro       write setBairro;
+    property Cidade      : String read FCidade       write setCidade;
+    property Estado      : String read FEstado       write setEstado;
+    property Pais        : String read FPais         write setPais;
+  public
+    constructor Create;
+    destructor Destroy;
+    procedure ClearClass;
+
+    function Valid : string;
+    function SaveXMLFile : Boolean;
+    function SendEmail : Boolean;
+  end;
+
+
+implementation
+
+{ TCliente }
+
+uses uEmail;
+
+procedure TCliente.ClearClass;
+Var
+  LNumProps, I : Integer;
+        LProps : PPropList;
+     LPropInfo : PPropInfo;
+begin
+  LNumProps := GetPropList(Self, LProps);
+  for I := 0 to LNumProps - 1 do
+  begin
+    LPropInfo := LProps^[I];
+    SetStrProp(Self, LPropInfo.Name, '');
+  end;
+end;
+
+constructor TCliente.Create;
+begin
+  ClearClass;
+end;
+
+destructor TCliente.Destroy;
+begin
+
+end;
+
+procedure TCliente.setBairro(const AValue: String);
+begin
+  FBairro := AValue;
+end;
+
+procedure TCliente.setCEP(const AValue: String);
+begin
+  FCEP := AValue;
+end;
+
+procedure TCliente.setCidade(const AValue: String);
+begin
+  FCidade := AValue;
+end;
+
+procedure TCliente.setComplemento(const AValue: String);
+begin
+  FComplemento := AValue;
+end;
+
+procedure TCliente.setCPF(const AValue: String);
+begin
+  FCPF := AValue;
+end;
+
+procedure TCliente.setEmail(const AValue: String);
+begin
+  FEmail := AValue;
+end;
+
+procedure TCliente.setEstado(const AValue: String);
+begin
+  FEstado := AValue;
+end;
+
+procedure TCliente.setIdentidade(const AValue: String);
+begin
+  FIdentidade := AValue;
+end;
+
+procedure TCliente.setLogradouro(const AValue: String);
+begin
+  FLogradouro := AValue;
+end;
+
+procedure TCliente.setNome(const AValue: String);
+begin
+  FNome := AValue;
+end;
+
+procedure TCliente.setNumero(const AValue: String);
+begin
+  FNumero := AValue;
+end;
+
+procedure TCliente.setPais(const AValue: String);
+begin
+  FPais := AValue;
+end;
+
+procedure TCliente.setTelefone(const AValue: String);
+begin
+  FTelefone := AValue;
+end;
+
+function TCliente.Valid: string;
+Var LValid : TValid;
+begin
+  Result   := '';
+  LValid := TValid.Create;
+
+  try
+    if LValid.MinLength(FNome, 10) = False then
+    begin
+      Result := 'O nome deve ter no mínimo 10 caracteres!';
+      Exit;
+    end;
+    if LValid.MinLength(FIdentidade, 6) = False  then
+    begin
+      Result := 'A identidade deve ter no mínimo 6 caracteres!';
+      Exit;
+    end;
+    if LValid.CPF(FCPF) = False  then
+    begin
+      Result := 'CPF inválido';
+      Exit;
+    end;
+    if LValid.Telefone(FTelefone) = False  then
+    begin
+      Result := 'Telefone inválido';
+      Exit;
+    end;
+    if LValid.Email(FEmail) = False  then
+    begin
+      Result := 'E-mail inválido';
+      Exit;
+    end;
+    if LValid.CEP(FCEP) = False  then
+    begin
+      Result := 'CEP inválido';
+      Exit;
+    end;
+    if LValid.MinLength(FLogradouro, 5) = False  then
+    begin
+      Result := 'O Logradouro deve ter no mínimo 5 caracteres';
+      Exit;
+    end;
+    if LValid.MinLength(FNumero, 1) = False  then
+    begin
+      Result := 'O número do endereço deve possuir no mínimo 1 caractere. Caso não exista preencha com S/N';
+      Exit;
+    end;
+    if LValid.MinLength(FBairro, 5) = False  then
+    begin
+      Result := 'O bairro deve ter no mínimo 5 caracteres';
+      Exit;
+    end;
+    if LValid.MinLength(FCidade, 3) = False  then
+    begin
+      Result := 'A cidade deve ter no mínimo 3 caracteres';
+      Exit;
+    end;
+    if LValid.MinLength(FEstado, 2) = False  then
+    begin
+      Result := 'O Estado deve ter no mínimo 2 caracteres';
+      Exit;
+    end;
+    if LValid.MinLength(FPais, 3) = False  then
+    begin
+      Result := 'O Pais deve ter no mínimo 3 caracteres';
+    end;
+
+  finally
+    FreeAndNil(LValid);
+  end;
+end;
+
+function TCliente.SaveXMLFile : Boolean;
+Var LStrCli : TStringList;
+  procedure AddValueTag (const ATag, AValue : string);
+  begin
+    LStrCli.Add('<'+ ATag + '>' + AValue + '</'+ ATag + '>' );
+  end;
+begin
+  Result := False;
+  LStrCli := TStringList.Create;
+  try
+    LStrCli.Add('<?xml version="1.0" encoding="ISO-8859-1" ?>');
+    LStrCli.Add('<cliente>');
+    AddValueTag ('nome',        FNome);
+    AddValueTag ('identidade',  FIdentidade);
+    AddValueTag ('CPF',         FCPF);
+    AddValueTag ('telefone',    FTelefone);
+    AddValueTag ('email',       FEmail);
+    AddValueTag ('CEP',         FCEP);
+    LStrCli.Add('<endereco>');
+    AddValueTag ('logradouro',  FLogradouro);
+    AddValueTag ('numero',      FNumero);
+    AddValueTag ('complemento', FComplemento);
+    AddValueTag ('bairro',      FBairro);
+    AddValueTag ('cidade',      FCidade);
+    AddValueTag ('estado',      FEstado);
+    AddValueTag ('pais',        FPais);
+    LStrCli.Add('</endereco>');
+    LStrCli.Add('</cliente>');
+    LStrCli.SaveToFile(ExtractFilePath(Application.ExeName) + 'clientes.xml');
+  finally
+    LStrCli.Free;
+  end;
+end;
+
+function TCliente.SendEmail: Boolean;
+Var LEmail  : TEmail;
+    LAnexos : TStringList;
+
+    function AddFormatTag(const AName, AValue : string) : string;
+    begin
+      Result := '<stong>' + AName + '</stong>: ' + AValue + '<br>';
+    end;
+begin
+  Result := False;
+  try
+    LEmail := TEmail.Create();
+    LEmail.Destinatarios.Add(FEmail);
+    LEmail.Assunto := 'Cadastro do cliente ' + FNome;
+    LEmail.Body := 'CADASTRO DO CLIENTE ' +
+                    AddFormatTag ('nome',        FNome) +
+                    AddFormatTag ('identidade',  FIdentidade)+
+                    AddFormatTag ('CPF',         FCPF)+
+                    AddFormatTag ('telefone',    FTelefone)+
+                    AddFormatTag ('email',       FEmail)+
+                    AddFormatTag ('CEP',         FCEP)+
+                    AddFormatTag ('logradouro',  FLogradouro)+
+                    AddFormatTag ('numero',      FNumero)+
+                    AddFormatTag ('complemento', FComplemento)+
+                    AddFormatTag ('bairro',      FBairro)+
+                    AddFormatTag ('cidade',      FCidade)+
+                    AddFormatTag ('estado',      FEstado)+
+                    AddFormatTag ('pais',        FPais);
+
+    LAnexos := TStringList.Create;
+    LEmail.Anexos.Add(ExtractFilePath(Application.ExeName) + 'clientes.xml');
+    Sleep(100);
+
+    Result := LEmail.Send;
+  finally
+    FreeAndNil(LEmail);
+    FreeAndNil(LAnexos);
+  end;
+end;
+
+end.

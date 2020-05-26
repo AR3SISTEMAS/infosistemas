@@ -1,0 +1,137 @@
+object frmModelo: TfrmModelo
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  Caption = 'CADASTRO MODELO'
+  ClientHeight = 641
+  ClientWidth = 984
+  Color = clBtnFace
+  Constraints.MinHeight = 680
+  Constraints.MinWidth = 1000
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesktopCenter
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object bvlTitulo: TBevel
+    AlignWithMargins = True
+    Left = 3
+    Top = 67
+    Width = 978
+    Height = 2
+    Align = alTop
+    ExplicitLeft = 1
+    ExplicitTop = 66
+    ExplicitWidth = 999
+  end
+  object stsMain: TStatusBar
+    AlignWithMargins = True
+    Left = 3
+    Top = 619
+    Width = 978
+    Height = 19
+    Panels = <>
+  end
+  object pgcDados: TPageControl
+    AlignWithMargins = True
+    Left = 8
+    Top = 80
+    Width = 968
+    Height = 528
+    Margins.Left = 8
+    Margins.Top = 8
+    Margins.Right = 8
+    Margins.Bottom = 8
+    ActivePage = tbsDadosGerais
+    Align = alClient
+    TabOrder = 1
+    ExplicitLeft = 3
+    ExplicitTop = 208
+    ExplicitHeight = 400
+    object tbsDadosGerais: TTabSheet
+      Caption = 'Dados Gerais'
+      ExplicitWidth = 970
+      ExplicitHeight = 517
+    end
+  end
+  object pnlMenu: TPanel
+    AlignWithMargins = True
+    Left = 3
+    Top = 3
+    Width = 978
+    Height = 58
+    Align = alTop
+    BevelOuter = bvLowered
+    TabOrder = 2
+    object btnNovo: TButton
+      AlignWithMargins = True
+      Left = 4
+      Top = 7
+      Width = 125
+      Height = 44
+      Margins.Top = 6
+      Margins.Bottom = 6
+      Align = alLeft
+      Caption = 'Novo'
+      ImageIndex = 0
+      ImageMargins.Left = 5
+      TabOrder = 0
+      OnClick = btnNovoClick
+      ExplicitLeft = 5
+      ExplicitTop = 11
+    end
+    object pnlAcao: TPanel
+      Left = 712
+      Top = 1
+      Width = 265
+      Height = 56
+      Align = alRight
+      BevelOuter = bvNone
+      TabOrder = 1
+      ExplicitLeft = 708
+      ExplicitTop = 2
+      object btnCancelar: TButton
+        Tag = 1
+        AlignWithMargins = True
+        Left = 134
+        Top = 6
+        Width = 125
+        Height = 44
+        Margins.Top = 6
+        Margins.Bottom = 6
+        Align = alLeft
+        Caption = 'Cancelar'
+        ImageIndex = 2
+        ImageMargins.Left = 5
+        TabOrder = 0
+        OnClick = btnCancelarClick
+        ExplicitLeft = 5
+        ExplicitTop = 11
+      end
+      object btnGravar: TButton
+        AlignWithMargins = True
+        Left = 3
+        Top = 6
+        Width = 125
+        Height = 44
+        Margins.Top = 6
+        Margins.Bottom = 6
+        Align = alLeft
+        Caption = 'Gravar'
+        ImageIndex = 1
+        ImageMargins.Left = 5
+        TabOrder = 1
+        OnClick = btnGravarClick
+        ExplicitLeft = 5
+        ExplicitTop = 11
+      end
+    end
+  end
+end

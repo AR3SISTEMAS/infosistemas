@@ -1,0 +1,6 @@
+object dmUI: TdmUI
+  OldCreateOrder = False
+  OnCreate = DataModuleCreate
+  Height = 390
+  Width = 637
+end
